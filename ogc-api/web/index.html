@@ -1,0 +1,1845 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OGC API - Processes Console</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #f6f7f9;
+  --panel: #ffffff;
+  --panel-2: #f0f2f5;
+  --border: #d8dce3;
+  --text: #16191d;
+  --muted: #5c6472;
+  --accent: #1d6fe0;
+  --accent-text: #ffffff;
+  --ok: #1a7f4b;
+  --warn: #8a5a00;
+  --err: #c0392b;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171c;
+    --panel: #1b1f26;
+    --panel-2: #22272f;
+    --border: #333a45;
+    --text: #e7eaef;
+    --muted: #9aa4b2;
+    --accent: #4d94f0;
+    --accent-text: #0d1117;
+    --ok: #4cc38a;
+    --warn: #e2b53d;
+    --err: #f06a5d;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+header h1 { font-size: 15px; margin: 0 12px 0 0; white-space: nowrap; }
+header h1 span { color: var(--muted); font-weight: 400; }
+label.field { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+input, select, textarea, button {
+  font: inherit;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+}
+textarea { font-family: var(--mono); font-size: 12.5px; width: 100%; min-height: 130px; resize: vertical; }
+button { cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+button.danger { color: var(--err); }
+button:disabled { opacity: .55; cursor: not-allowed; }
+nav.tabs { display: flex; gap: 2px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--border); }
+nav.tabs button {
+  border: none; border-bottom: 2px solid transparent; border-radius: 0;
+  background: none; padding: 9px 14px; color: var(--muted);
+}
+nav.tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+main { padding: 16px; max-width: 1500px; margin: 0 auto; }
+.tabpanel[hidden] { display: none; }
+.split { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 16px; align-items: start; }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.card h2 { font-size: 14px; margin: 0 0 10px; }
+.card h3 { font-size: 12px; margin: 18px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+ul.list { list-style: none; margin: 0; padding: 0; }
+ul.list li button {
+  display: block; width: 100%; text-align: left; border: none; border-radius: 6px;
+  background: none; padding: 8px 10px; margin-bottom: 2px;
+}
+ul.list li button:hover { background: var(--panel-2); }
+ul.list li button[aria-current="true"] { background: var(--accent); color: var(--accent-text); }
+ul.list small { display: block; opacity: .75; font-size: 11.5px; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--mono); font-size: 12.5px; }
+.pill {
+  display: inline-block; padding: 1px 8px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 600; border: 1px solid var(--border); background: var(--panel-2);
+}
+.pill.ok { color: var(--ok); border-color: currentColor; }
+.pill.err { color: var(--err); border-color: currentColor; }
+.pill.warn { color: var(--warn); border-color: currentColor; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.input-row { margin-bottom: 14px; }
+.input-row > label { display: block; font-weight: 600; margin-bottom: 3px; }
+.input-row .hint { font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+.input-row input[type="text"], .input-row input[type="number"], .input-row select { width: 100%; max-width: 420px; }
+.req { color: var(--err); }
+pre {
+  margin: 0; padding: 12px; overflow: auto; max-height: 460px;
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px;
+  font-family: var(--mono); font-size: 12.5px;
+}
+pre .k { color: var(--accent); }
+pre .s { color: var(--ok); }
+pre .n { color: var(--warn); }
+pre .b { color: var(--err); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
+tbody tr:hover { background: var(--panel-2); }
+.grid-kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; font-size: 13px; margin: 0; }
+.grid-kv dt { color: var(--muted); }
+.grid-kv dd { margin: 0; overflow-wrap: anywhere; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.banner { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--err); color: var(--err); background: var(--panel); margin-bottom: 12px; }
+a { color: var(--accent); }
+@media (max-width: 860px) { .split { grid-template-columns: 1fr; } }
+/* ---- BPMN recipe flow ---------------------------------------------------
+   The five step processes drawn as a BPMN collaboration: start event, tasks,
+   an exclusive gateway for the BAG source, and an end event. Node state is
+   driven from JS as the recipe runs, so the diagram doubles as a progress
+   indicator rather than being a static picture. */
+.bpmn-wrap { overflow-x: auto; padding: 4px 0 12px; }
+.bpmn { display: block; min-width: 1100px; width: 100%; height: auto; }
+
+.bpmn .evt { fill: var(--panel); stroke: var(--muted); stroke-width: 2; }
+.bpmn .evt-end { stroke-width: 4; }
+.bpmn .gw { fill: var(--panel); stroke: var(--muted); stroke-width: 2; }
+.bpmn .gw-x { stroke: var(--muted); stroke-width: 2; }
+.bpmn .flow { fill: none; stroke: var(--muted); stroke-width: 1.5; }
+.bpmn .flow-label { fill: var(--muted); font-size: 11px; }
+.bpmn .evt-label { fill: var(--muted); font-size: 11px; }
+
+.bpmn .task { cursor: pointer; }
+.bpmn .task rect {
+  fill: var(--panel-2);
+  stroke: var(--border);
+  stroke-width: 2;
+  rx: 8;
+  transition: fill .15s, stroke .15s;
+}
+.bpmn .task:hover rect { stroke: var(--accent); }
+.bpmn .task .t-num { fill: var(--muted); font-size: 11px; font-weight: 600; }
+.bpmn .task .t-id { fill: var(--text); font-size: 12px; font-weight: 600; }
+.bpmn .task .t-io { fill: var(--muted); font-size: 10.5px; }
+.bpmn .task .t-time { fill: var(--muted); font-size: 10.5px; }
+
+.bpmn .task[data-state="running"] rect { stroke: var(--accent); fill: color-mix(in srgb, var(--accent) 12%, var(--panel-2)); }
+.bpmn .task[data-state="done"] rect    { stroke: var(--ok);     fill: color-mix(in srgb, var(--ok) 12%, var(--panel-2)); }
+.bpmn .task[data-state="failed"] rect  { stroke: var(--err);    fill: color-mix(in srgb, var(--err) 14%, var(--panel-2)); }
+.bpmn .task[data-state="skipped"] rect { stroke: var(--border); fill: var(--panel); stroke-dasharray: 5 4; }
+.bpmn .task[data-state="skipped"] .t-id,
+.bpmn .task[data-state="skipped"] .t-num { fill: var(--muted); }
+.bpmn .task[data-selected="true"] rect { stroke: var(--accent); stroke-width: 3; }
+
+/* The running node pulses so a long PDOK fetch does not look stalled. */
+@keyframes bpmnPulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+.bpmn .task[data-state="running"] rect { animation: bpmnPulse 1.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .bpmn .task[data-state="running"] rect { animation: none; }
+}
+
+.bpmn .flow[data-state="done"]    { stroke: var(--ok); stroke-width: 2.5; }
+.bpmn .flow[data-state="skipped"] { stroke-dasharray: 5 4; opacity: .5; }
+
+.recipe-steps { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
+.recipe-steps li {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; padding: 3px 8px; border: 1px solid var(--border);
+  border-radius: 999px; background: var(--panel-2);
+}
+.recipe-steps li[data-state="done"]    { border-color: var(--ok); }
+.recipe-steps li[data-state="failed"]  { border-color: var(--err); }
+.recipe-steps li[data-state="running"] { border-color: var(--accent); }
+.recipe-steps li[data-state="skipped"] { opacity: .55; }
+</style>
+</head>
+<body>
+<header>
+  <h1>OGC API <span>&middot; Processes console</span></h1>
+  <label class="field">Base URL
+    <input id="baseUrl" type="text" size="26" value="http://localhost:8080" spellcheck="false">
+  </label>
+  <label class="field">X-Api-Key
+    <input id="apiKey" type="password" size="16" placeholder="optional" autocomplete="off" spellcheck="false">
+  </label>
+  <button id="connect" class="primary">Connect</button>
+  <span id="connStatus" class="muted">not connected</span>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" data-tab="processes" aria-selected="true">Processes</button>
+  <button role="tab" data-tab="jobs" aria-selected="false">Jobs</button>
+  <button role="tab" data-tab="recipe" aria-selected="false">Recipe</button>
+  <button role="tab" data-tab="service" aria-selected="false">Service</button>
+</nav>
+
+<main>
+  <div id="globalError" class="banner" hidden></div>
+
+  <section id="tab-processes" class="tabpanel" role="tabpanel">
+    <div class="split">
+      <div class="card">
+        <h2>Processes</h2>
+        <ul id="processList" class="list"><li class="muted">Connect to load.</li></ul>
+      </div>
+      <div>
+        <div id="processDetail" class="card"><p class="muted">Select a process.</p></div>
+        <div id="responseCard" class="card" hidden>
+          <h2>Response</h2>
+          <div id="responseBody"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-jobs" class="tabpanel" role="tabpanel" hidden>
+    <div class="card">
+      <h2>Job list <span class="mono muted">GET /jobs</span></h2>
+      <div class="toolbar">
+        <label class="field">processID <input id="fProcess" type="text" size="18" placeholder="any"></label>
+        <label class="field">status
+          <select id="fStatus">
+            <option value="">any</option>
+            <option>accepted</option><option>running</option><option>successful</option>
+            <option>failed</option><option>dismissed</option>
+          </select>
+        </label>
+        <label class="field">limit <input id="fLimit" type="number" min="1" max="10000" value="25" size="5"></label>
+        <button id="refreshJobs">Refresh</button>
+      </div>
+      <div id="jobsTable"><p class="muted">Connect to load.</p></div>
+    </div>
+    <div id="jobDetail" class="card" hidden></div>
+  </section>
+
+  <section id="tab-service" class="tabpanel" role="tabpanel" hidden>
+    <div class="card">
+      <h2>Landing page <span class="mono muted">GET /</span></h2>
+      <div id="landing"><p class="muted">Connect to load.</p></div>
+    </div>
+    <div class="card">
+      <h2>Conformance <span class="mono muted">GET /conformance</span></h2>
+      <div id="conformance"><p class="muted">Connect to load.</p></div>
+    </div>
+    <div class="card">
+      <h2>API definition <span class="mono muted">GET /api</span></h2>
+      <div class="row">
+        <a id="apiLink" href="#" target="_blank" rel="noopener">Open /api in a new tab</a>
+        <button id="loadApi">Load here</button>
+      </div>
+      <div id="apiDoc" style="margin-top:12px"></div>
+    </div>
+  </section>
+  <section id="tab-recipe" class="tabpanel" role="tabpanel" hidden>
+    <div class="card">
+      <h2>Recipe <span class="mono muted">CWL Workflow</span></h2>
+      <p class="muted">
+        The flow below is generated from the CWL Workflow document, not hard-coded:
+        edit the <span class="mono">steps</span> and the diagram and the execution
+        follow. Each step runs as its own OGC process execution, wired by the CWL
+        <span class="mono">in</span>/<span class="mono">out</span> graph, so every
+        intermediate value stays visible. Click a task to inspect what it exchanged.
+      </p>
+
+      <div class="bpmn-wrap" id="bpmnHost"></div>
+
+      <div class="toolbar">
+        <label class="field">Run as
+          <select id="rMode">
+            <option value="steps">Step by step (one request per step)</option>
+            <option value="nested">One nested request (Part 3)</option>
+          </select>
+        </label>
+        <button id="runRecipe" class="primary">Run recipe</button>
+        <button id="compareRecipe">Compare with plot-bag-matching-pdok</button>
+        <span id="recipeStatus" class="muted">idle</span>
+      </div>
+      <ul id="recipeSteps" class="recipe-steps"></ul>
+      <p id="recipeModeNote" class="muted"></p>
+    </div>
+
+    <div class="split">
+      <div class="card">
+        <h2>Workflow <span class="mono muted">CWL, JSON encoding</span></h2>
+        <textarea id="rCwl" rows="20" class="mono" spellcheck="false"></textarea>
+        <div class="toolbar">
+          <button id="rCwlDefault">Default recipe</button>
+          <button id="rCwlNoFetch">Without PDOK fetch</button>
+          <button id="rCwlValidate">Validate</button>
+        </div>
+        <h2>Workflow inputs <span class="mono muted">JSON</span></h2>
+        <textarea id="rInputs" rows="10" class="mono" spellcheck="false"></textarea>
+        <div class="toolbar">
+          <button id="rExample">Example (Utrecht)</button>
+          <button id="rBowtie">Example (self-intersecting)</button>
+        </div>
+      </div>
+      <div>
+        <div id="recipeDetail" class="card"><p class="muted">Run the recipe, then select a task.</p></div>
+        <div id="recipeCompare" class="card" hidden></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+"use strict";
+
+// ---------------------------------------------------------------- state ----
+
+const state = {
+  baseUrl: "http://localhost:8080",
+  apiKey: "",
+  processes: [],
+  current: null,   // ProcessDescription of the selected process
+  poller: null,    // interval id of the async job poller
+};
+
+const $ = (sel, root) => (root || document).querySelector(sel);
+const el = (tag, props, children) => {
+  const n = Object.assign(document.createElement(tag), props || {});
+  for (const c of children || []) n.append(c);
+  return n;
+};
+
+// Demo payloads for inputs that are too structured to type by hand.
+// Keyed by "<processId>.<inputId>"; purely a convenience, the API never sees them.
+const EXAMPLES = {
+  "plot-bag-matching.plot": {
+    plan_dataid: "example-1",
+    plan_plannaam: "Voorbeeldplan",
+    geometry: {
+      type: "Polygon",
+      coordinates: [[[5.0, 52.0], [5.002, 52.0], [5.002, 52.002], [5.0, 52.002], [5.0, 52.0]]],
+    },
+  },
+  // The PDOK variant matches against real BAG data, so its example is a real place.
+  "plot-bag-matching-pdok.plot": {
+    plan_dataid: "amsterdam-test",
+    plan_plannaam: "Dam e.o.",
+    geometry: {
+      type: "Polygon",
+      coordinates: [[[4.8895, 52.3705], [4.8905, 52.3705], [4.8905, 52.3715], [4.8895, 52.3715], [4.8895, 52.3705]]],
+    },
+  },
+  "plot-bag-matching.bag_buildings": [{
+    type: "Feature",
+    properties: { identificatie: "NL.IMBAG.PAND.0001", bouwjaar: 2019 },
+    geometry: {
+      type: "Polygon",
+      coordinates: [[[5.0005, 52.0005], [5.0008, 52.0005], [5.0008, 52.0008], [5.0005, 52.0008], [5.0005, 52.0005]]],
+    },
+  }],
+};
+
+// ------------------------------------------------------------- http i/o ----
+
+// request calls the API and always resolves to a result object, so callers
+// render transport failures (server down, CORS) the same way as HTTP errors.
+async function request(path, opts) {
+  opts = opts || {};
+  const url = state.baseUrl.replace(/\/+$/, "") + path;
+  const headers = Object.assign({ Accept: "application/json" }, opts.headers || {});
+  if (state.apiKey) headers["X-Api-Key"] = state.apiKey;
+  if (opts.body != null) headers["Content-Type"] = "application/json";
+
+  let res;
+  try {
+    res = await fetch(url, { method: opts.method || "GET", headers, body: opts.body });
+  } catch (err) {
+    return { url, ok: false, networkError: String(err && err.message || err) };
+  }
+  const text = await res.text();
+  let body = null;
+  if (text) {
+    try { body = JSON.parse(text); } catch (_) { body = text; }
+  }
+  const headerMap = {};
+  res.headers.forEach((v, k) => { headerMap[k] = v; });
+  return { url, ok: res.ok, status: res.status, statusText: res.statusText, headers: headerMap, body, text };
+}
+
+function showError(msg) {
+  const box = $("#globalError");
+  if (!msg) { box.hidden = true; box.textContent = ""; return; }
+  box.hidden = false;
+  box.textContent = msg;
+}
+
+function describeFailure(res) {
+  if (res.networkError) {
+    const hints = [];
+    // Mixed content: an https page cannot call an http API at all, and the
+    // browser blocks it before any request is made.
+    if (location.protocol === "https:" && /^http:\/\//i.test(res.url)) {
+      hints.push("this page is served over https, so the browser blocks a plain http API - use https for the Base URL");
+    }
+    if (location.protocol === "file:") {
+      hints.push("a file:// page sends Origin: null, so CORS_ALLOWED_ORIGINS must allow it (the default * does)");
+    }
+    hints.push("check that the server is reachable and that CORS_ALLOWED_ORIGINS covers this page");
+    return "Could not reach " + res.url + " - " + res.networkError + ". " +
+      hints.join("; ") + ".";
+  }
+  const b = res.body;
+  if (b && typeof b === "object" && (b.title || b.detail)) {
+    return res.status + " " + (b.title || "") + (b.detail ? " - " + b.detail : "");
+  }
+  return res.status + " " + (res.statusText || "error");
+}
+
+
+// -------------------------------------------------------------- render -----
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+}
+
+// jsonBlock pretty-prints and lightly highlights a JSON value.
+function jsonBlock(value) {
+  const text = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+  const html = escapeHtml(text).replace(
+    /("(?:\\.|[^"\\])*"(\s*:)?|\b(?:true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g,
+    (m, _all, colon) => {
+      let cls = "n";
+      if (m[0] === '"') cls = colon ? "k" : "s";
+      else if (/^(true|false|null)$/.test(m)) cls = "b";
+      return '<span class="' + cls + '">' + m + "</span>";
+    }
+  );
+  const pre = document.createElement("pre");
+  pre.innerHTML = html;
+  return pre;
+}
+
+function statusPill(status) {
+  const cls = { successful: "ok", failed: "err", running: "warn", accepted: "warn", dismissed: "" }[status] || "";
+  return el("span", { className: "pill " + cls, textContent: status || "-" });
+}
+
+function httpPill(status) {
+  const cls = status >= 500 ? "err" : status >= 400 ? "err" : status >= 300 ? "warn" : "ok";
+  return el("span", { className: "pill " + cls, textContent: "HTTP " + status });
+}
+
+function kv(pairs) {
+  const dl = el("dl", { className: "grid-kv" });
+  for (const [k, v] of pairs) {
+    if (v == null || v === "") continue;
+    dl.append(el("dt", { textContent: k }));
+    dl.append(v instanceof Node ? el("dd", {}, [v]) : el("dd", { textContent: String(v) }));
+  }
+  return dl;
+}
+
+// ------------------------------------------------------- schema -> form ----
+
+function schemaTypes(schema) {
+  const t = schema && schema.type;
+  if (Array.isArray(t)) return t;
+  return t ? [t] : [];
+}
+
+// primaryType picks the type that drives the control; null is only a modifier.
+function primaryType(schema) {
+  const types = schemaTypes(schema).filter((t) => t !== "null");
+  if (types.length) return types[0];
+  if (schema && (schema.properties || schema.required)) return "object";
+  if (schema && schema.items) return "array";
+  if (schema && schema.oneOf) return "any";
+  return "any";
+}
+
+// skeleton builds an editable starting value from a JSON Schema.
+function skeleton(schema, depth) {
+  depth = depth || 0;
+  if (!schema || depth > 6) return null;
+  if (schema.default !== undefined) return schema.default;
+  if (Array.isArray(schema.enum) && schema.enum.length) return schema.enum[0];
+  if (schema.oneOf && schema.oneOf.length) return skeleton(schema.oneOf[0], depth + 1);
+  switch (primaryType(schema)) {
+    case "object": {
+      const out = {};
+      const props = schema.properties || {};
+      const required = schema.required || Object.keys(props);
+      for (const name of required) if (props[name]) out[name] = skeleton(props[name], depth + 1);
+      return out;
+    }
+    case "array":
+      return schema.items ? [skeleton(schema.items, depth + 1)] : [];
+    case "string": return "";
+    case "integer": case "number": return schema.minimum != null ? schema.minimum : 0;
+    case "boolean": return false;
+    default: return null;
+  }
+}
+
+// inputControl renders one process input and returns {wrapper, read}.
+// read() returns {skip: true} when the field is empty and optional.
+function inputControl(processId, name, desc) {
+  const schema = desc.schema || {};
+  const required = (desc.minOccurs == null ? 1 : desc.minOccurs) > 0;
+  const type = primaryType(schema);
+  const wrapper = el("div", { className: "input-row" });
+
+  const label = el("label", {});
+  label.append(desc.title || name);
+  label.append(el("span", { className: "mono muted", textContent: "  " + name }));
+  if (required) label.append(el("span", { className: "req", textContent: " *" }));
+  wrapper.append(label);
+  if (desc.description) wrapper.append(el("div", { className: "hint", textContent: desc.description }));
+
+  let read;
+
+  if (Array.isArray(schema.enum)) {
+    const sel = el("select", {});
+    sel.append(el("option", { value: "", textContent: required ? "- select -" : "- unset -" }));
+    for (const v of schema.enum) sel.append(el("option", { value: String(v), textContent: String(v) }));
+    wrapper.append(sel);
+    read = () => (sel.value === "" ? { skip: true } : { value: sel.value });
+  } else if (type === "boolean") {
+    const sel = el("select", {});
+    sel.append(el("option", { value: "", textContent: "- unset -" }));
+    sel.append(el("option", { value: "true", textContent: "true" }));
+    sel.append(el("option", { value: "false", textContent: "false" }));
+    wrapper.append(sel);
+    read = () => (sel.value === "" ? { skip: true } : { value: sel.value === "true" });
+  } else if (type === "integer" || type === "number") {
+    const inp = el("input", { type: "number", step: type === "integer" ? "1" : "any" });
+    if (schema.minimum != null) inp.min = schema.minimum;
+    if (schema.maximum != null) inp.max = schema.maximum;
+    if (schema.default !== undefined) inp.placeholder = "default: " + schema.default;
+    wrapper.append(inp);
+    read = () => {
+      if (inp.value.trim() === "") return { skip: true };
+      const n = Number(inp.value);
+      if (Number.isNaN(n)) return { error: name + ": not a number" };
+      return { value: n };
+    };
+  } else if (type === "string") {
+    const inp = el("input", { type: "text", spellcheck: false });
+    wrapper.append(inp);
+    read = () => (inp.value === "" ? { skip: true } : { value: inp.value });
+  } else {
+    // object, array or an untyped/oneOf schema: edit the JSON directly.
+    const ta = el("textarea", { spellcheck: false });
+    const example = EXAMPLES[processId + "." + name];
+    const tools = el("div", { className: "row", style: "margin-top:6px" });
+    const fill = (v) => { ta.value = JSON.stringify(v, null, 2); };
+    const btn = (text, fn) => {
+      const b = el("button", { type: "button", textContent: text });
+      b.addEventListener("click", fn);
+      return b;
+    };
+    tools.append(btn("Skeleton", () => fill(skeleton(schema))));
+    if (example !== undefined) tools.append(btn("Example", () => fill(example)));
+    tools.append(btn("Format", () => {
+      try { fill(JSON.parse(ta.value)); showError(null); }
+      catch (e) { showError(name + ": " + e.message); }
+    }));
+    tools.append(btn("Clear", () => { ta.value = ""; }));
+    tools.append(btn("Schema", () => {
+      const box = $("#responseCard");
+      box.hidden = false;
+      const body = $("#responseBody");
+      body.replaceChildren(el("p", { className: "muted", textContent: "Schema of input " + name }), jsonBlock(schema));
+    }));
+    wrapper.append(ta, tools);
+    read = () => {
+      if (ta.value.trim() === "") return { skip: true };
+      try { return { value: JSON.parse(ta.value) }; }
+      catch (e) { return { error: name + ": invalid JSON - " + e.message }; }
+    };
+  }
+
+  return { wrapper, read: () => Object.assign({ required, name }, read()) };
+}
+
+// --------------------------------------------------------- processes ui ----
+
+async function loadProcesses() {
+  const res = await request("/processes?limit=10000");
+  if (!res.ok) { showError(describeFailure(res)); return false; }
+  state.processes = (res.body && res.body.processes) || [];
+  const list = $("#processList");
+  list.replaceChildren();
+  if (!state.processes.length) {
+    list.append(el("li", { className: "muted", textContent: "No processes registered." }));
+    return true;
+  }
+  for (const p of state.processes) {
+    const btn = el("button", { type: "button" });
+    btn.append(p.title || p.id);
+    btn.append(el("small", { textContent: p.id + " v" + (p.version || "?") }));
+    btn.addEventListener("click", () => selectProcess(p.id));
+    list.append(el("li", {}, [btn]));
+  }
+  return true;
+}
+
+function markSelected(id) {
+  for (const btn of $("#processList").querySelectorAll("button")) {
+    const isCurrent = btn.querySelector("small") && btn.querySelector("small").textContent.startsWith(id + " v");
+    btn.setAttribute("aria-current", isCurrent ? "true" : "false");
+  }
+}
+
+async function selectProcess(id) {
+  const res = await request("/processes/" + encodeURIComponent(id));
+  if (!res.ok) { showError(describeFailure(res)); return; }
+  showError(null);
+  state.current = res.body;
+  markSelected(id);
+  renderProcess(res.body);
+}
+
+function renderProcess(desc) {
+  const card = $("#processDetail");
+  card.replaceChildren();
+  card.append(el("h2", { textContent: desc.title || desc.id }));
+  card.append(kv([
+    ["id", el("span", { className: "mono", textContent: desc.id })],
+    ["version", desc.version],
+    ["job control", (desc.jobControlOptions || []).join(", ")],
+    ["keywords", (desc.keywords || []).join(", ")],
+  ]));
+  if (desc.description) card.append(el("p", { textContent: desc.description }));
+
+  // --- inputs -------------------------------------------------------------
+  const form = el("form", {});
+  form.append(el("h3", { textContent: "Inputs" }));
+  const readers = [];
+  const inputs = desc.inputs || {};
+  const names = Object.keys(inputs).sort((a, b) => {
+    const ra = (inputs[a].minOccurs == null ? 1 : inputs[a].minOccurs) > 0;
+    const rb = (inputs[b].minOccurs == null ? 1 : inputs[b].minOccurs) > 0;
+    return ra === rb ? a.localeCompare(b) : (ra ? -1 : 1);
+  });
+  if (!names.length) form.append(el("p", { className: "muted", textContent: "This process takes no inputs." }));
+  for (const name of names) {
+    const ctl = inputControl(desc.id, name, inputs[name]);
+    form.append(ctl.wrapper);
+    readers.push(ctl.read);
+  }
+
+  // --- outputs ------------------------------------------------------------
+  form.append(el("h3", { textContent: "Requested outputs" }));
+  const outputs = desc.outputs || {};
+  const outNames = Object.keys(outputs);
+  const outBoxes = {};
+  const outRow = el("div", { className: "row" });
+  for (const name of outNames) {
+    const cb = el("input", { type: "checkbox", checked: true, id: "out-" + name });
+    outBoxes[name] = cb;
+    const lbl = el("label", { className: "field", title: outputs[name].description || "" });
+    lbl.append(cb, document.createTextNode(" " + (outputs[name].title || name)));
+    outRow.append(lbl);
+  }
+  if (!outNames.length) outRow.append(el("span", { className: "muted", textContent: "none declared" }));
+  form.append(outRow);
+  form.append(el("p", {
+    className: "hint muted",
+    textContent: "All selected sends no outputs member (all outputs). A subset sends only those; " +
+      "none selected sends an empty object, which answers 204 No Content.",
+  }));
+
+  // --- execution options --------------------------------------------------
+  form.append(el("h3", { textContent: "Execution" }));
+  const prefer = el("select", {});
+  prefer.append(el("option", { value: "", textContent: "auto (no Prefer header)" }));
+  prefer.append(el("option", { value: "respond-sync", textContent: "Prefer: respond-sync" }));
+  prefer.append(el("option", { value: "respond-async", textContent: "Prefer: respond-async" }));
+  const preferLabel = el("label", { className: "field" });
+  preferLabel.append("Mode ", prefer);
+
+  const rawToggle = el("input", { type: "checkbox" });
+  const rawLabel = el("label", { className: "field" });
+  rawLabel.append(rawToggle, document.createTextNode(" Edit raw request body"));
+
+  const execBtn = el("button", { type: "submit", className: "primary", textContent: "Execute" });
+  const curlBtn = el("button", { type: "button", textContent: "Copy curl" });
+  form.append(el("div", { className: "row" }, [preferLabel, rawLabel, execBtn, curlBtn]));
+
+  const rawBox = el("div", { hidden: true, style: "margin-top:10px" });
+  const rawArea = el("textarea", { spellcheck: false });
+  rawBox.append(rawArea);
+  form.append(rawBox);
+
+  // buildBody turns the form into an execute request, or returns {error}.
+  const buildBody = () => {
+    if (rawToggle.checked) {
+      try { return { body: JSON.parse(rawArea.value || "{}") }; }
+      catch (e) { return { error: "Request body: invalid JSON - " + e.message }; }
+    }
+    const values = {};
+    for (const read of readers) {
+      const r = read();
+      if (r.error) return { error: r.error };
+      if (r.skip) {
+        if (r.required) return { error: r.name + " is required." };
+        continue;
+      }
+      values[r.name] = r.value;
+    }
+    const body = { inputs: values };
+    const selected = outNames.filter((n) => outBoxes[n].checked);
+    if (selected.length !== outNames.length) {
+      body.outputs = {};
+      for (const n of selected) body.outputs[n] = {};
+    }
+    return { body };
+  };
+
+  rawToggle.addEventListener("change", () => {
+    if (rawToggle.checked) {
+      const built = buildBody();
+      rawArea.value = JSON.stringify(built.body || { inputs: {} }, null, 2);
+    }
+    rawBox.hidden = !rawToggle.checked;
+    for (const node of form.querySelectorAll(".input-row")) node.hidden = rawToggle.checked;
+  });
+
+  curlBtn.addEventListener("click", async () => {
+    const built = buildBody();
+    if (built.error) { showError(built.error); return; }
+    const lines = [
+      "curl -X POST " + state.baseUrl.replace(/\/+$/, "") + "/processes/" + desc.id + "/execution",
+      "  -H 'Content-Type: application/json'",
+    ];
+    if (prefer.value) lines.push("  -H 'Prefer: " + prefer.value + "'");
+    if (state.apiKey) lines.push("  -H 'X-Api-Key: <your-key>'");
+    lines.push("  -d '" + JSON.stringify(built.body) + "'");
+    const cmd = lines.join(" \\\n");
+    try { await navigator.clipboard.writeText(cmd); showError(null); }
+    catch (_) { /* clipboard blocked on file:// in some browsers */ }
+    const box = $("#responseCard");
+    box.hidden = false;
+    $("#responseBody").replaceChildren(
+      el("p", { className: "muted", textContent: "curl equivalent (copied to clipboard if permitted)" }),
+      el("pre", { textContent: cmd })
+    );
+  });
+
+  form.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const built = buildBody();
+    if (built.error) { showError(built.error); return; }
+    showError(null);
+    execBtn.disabled = true;
+    execBtn.textContent = "Running...";
+    try {
+      await execute(desc.id, built.body, prefer.value);
+    } finally {
+      execBtn.disabled = false;
+      execBtn.textContent = "Execute";
+    }
+  });
+
+  card.append(form);
+}
+
+// ---------------------------------------------------------- execution ------
+
+async function execute(processId, body, prefer) {
+  stopPolling();
+  const headers = {};
+  if (prefer) headers.Prefer = prefer;
+  const res = await request("/processes/" + encodeURIComponent(processId) + "/execution", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+  renderResponse(res, body);
+
+  // 201 with a job id means the server took the async route: follow it.
+  const jobId = res.ok && res.body && typeof res.body === "object" ? res.body.id : null;
+  if (res.status === 201 && jobId) startPolling(jobId);
+}
+
+function renderResponse(res, sentBody) {
+  const card = $("#responseCard");
+  const out = $("#responseBody");
+  card.hidden = false;
+  out.replaceChildren();
+
+  if (res.networkError) {
+    out.append(el("p", { className: "banner", textContent: describeFailure(res) }));
+    return;
+  }
+
+  const head = el("div", { className: "row" });
+  head.append(httpPill(res.status), el("span", { className: "mono muted", textContent: res.url }));
+  out.append(head);
+
+  const interesting = ["location", "preference-applied", "link", "ogc-output-values-count", "content-type"];
+  const pairs = interesting
+    .filter((h) => res.headers[h])
+    .map((h) => [h, res.headers[h]]);
+  if (pairs.length) out.append(kv(pairs));
+
+  if (sentBody) {
+    out.append(el("h3", { textContent: "Request body" }));
+    out.append(jsonBlock(sentBody));
+  }
+
+  out.append(el("h3", { textContent: "Response body" }));
+  if (res.status === 204 || res.text === "") {
+    out.append(el("p", { className: "muted", textContent: "(empty)" }));
+  } else {
+    out.append(jsonBlock(res.body));
+  }
+}
+
+// startPolling follows an async job until it reaches a terminal status.
+function startPolling(jobId) {
+  const box = el("div", { style: "margin-top:12px" });
+  box.append(el("h3", { textContent: "Job " + jobId }));
+  const line = el("p", { className: "muted", textContent: "polling..." });
+  box.append(line);
+  $("#responseBody").append(box);
+
+  let elapsed = 0;
+  const tick = async () => {
+    const res = await request("/jobs/" + encodeURIComponent(jobId));
+    if (!res.ok) { line.textContent = "poll failed: " + describeFailure(res); stopPolling(); return; }
+    const st = res.body || {};
+    line.replaceChildren();
+    line.append(statusPill(st.status));
+    if (st.progress != null) line.append(document.createTextNode(" " + st.progress + "%"));
+    if (st.message) line.append(document.createTextNode(" - " + st.message));
+
+    if (["successful", "failed", "dismissed"].includes(st.status)) {
+      stopPolling();
+      box.append(jsonBlock(st));
+      if (st.status === "successful") {
+        const r = await request("/jobs/" + encodeURIComponent(jobId) + "/results");
+        box.append(el("h3", { textContent: "Results" }));
+        box.append(r.ok ? jsonBlock(r.body) : el("p", { className: "muted", textContent: describeFailure(r) }));
+      }
+      loadJobs();
+    }
+    elapsed += 1500;
+    if (elapsed > 120000) { line.append(document.createTextNode(" (stopped polling after 2 min)")); stopPolling(); }
+  };
+  tick();
+  state.poller = setInterval(tick, 1500);
+}
+
+function stopPolling() {
+  if (state.poller) { clearInterval(state.poller); state.poller = null; }
+}
+
+// --------------------------------------------------------------- jobs ------
+
+async function loadJobs() {
+  const params = new URLSearchParams();
+  const pid = $("#fProcess").value.trim();
+  const status = $("#fStatus").value;
+  const limit = $("#fLimit").value;
+  if (pid) params.set("processID", pid);
+  if (status) params.set("status", status);
+  if (limit) params.set("limit", limit);
+  const qs = params.toString();
+  const res = await request("/jobs" + (qs ? "?" + qs : ""));
+  const host = $("#jobsTable");
+  host.replaceChildren();
+  if (!res.ok) { host.append(el("p", { className: "banner", textContent: describeFailure(res) })); return; }
+
+  const jobs = (res.body && res.body.jobs) || [];
+  if (!jobs.length) { host.append(el("p", { className: "muted", textContent: "No jobs." })); return; }
+
+  const table = el("table");
+  const head = el("tr");
+  for (const h of ["id", "status", "process", "created", "finished", ""]) head.append(el("th", { textContent: h }));
+  table.append(el("thead", {}, [head]));
+  const tbody = el("tbody");
+  for (const job of jobs) {
+    const tr = el("tr");
+    tr.append(el("td", { className: "mono", textContent: job.id }));
+    tr.append(el("td", {}, [statusPill(job.status)]));
+    tr.append(el("td", { className: "mono", textContent: shortProcessId(job.processID) }));
+    tr.append(el("td", { className: "muted", textContent: fmtTime(job.created) }));
+    tr.append(el("td", { className: "muted", textContent: fmtTime(job.finished) }));
+    const actions = el("td", { className: "row" });
+    const open = el("button", { type: "button", textContent: "Open" });
+    open.addEventListener("click", () => showJob(job.id));
+    actions.append(open);
+    tr.append(actions);
+    tbody.append(tr);
+  }
+  table.append(tbody);
+  host.append(table);
+}
+
+function shortProcessId(processID) {
+  if (!processID) return "";
+  const i = processID.lastIndexOf("/");
+  return i === -1 ? processID : processID.slice(i + 1);
+}
+
+function fmtTime(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
+}
+
+async function showJob(jobId) {
+  const card = $("#jobDetail");
+  card.hidden = false;
+  card.replaceChildren(el("h2", { textContent: "Job " + jobId }));
+
+  const res = await request("/jobs/" + encodeURIComponent(jobId));
+  if (!res.ok) { card.append(el("p", { className: "banner", textContent: describeFailure(res) })); return; }
+  const st = res.body || {};
+
+  card.append(kv([
+    ["status", statusPill(st.status)],
+    ["process", shortProcessId(st.processID)],
+    ["created", fmtTime(st.created)],
+    ["started", fmtTime(st.started)],
+    ["finished", fmtTime(st.finished)],
+    ["message", st.message],
+  ]));
+
+  const tools = el("div", { className: "row", style: "margin-top:10px" });
+  const resultsBtn = el("button", { type: "button", textContent: "Get results" });
+  resultsBtn.disabled = st.status !== "successful";
+  const dismissBtn = el("button", { type: "button", className: "danger", textContent: "Dismiss" });
+  tools.append(resultsBtn, dismissBtn);
+  card.append(tools);
+
+  const out = el("div", { style: "margin-top:12px" });
+  out.append(el("h3", { textContent: "Status document" }), jsonBlock(st));
+  card.append(out);
+
+  resultsBtn.addEventListener("click", async () => {
+    const r = await request("/jobs/" + encodeURIComponent(jobId) + "/results");
+    out.append(el("h3", { textContent: "Results" }));
+    out.append(r.ok ? jsonBlock(r.body) : el("p", { className: "banner", textContent: describeFailure(r) }));
+  });
+
+  dismissBtn.addEventListener("click", async () => {
+    if (!confirm("Dismiss job " + jobId + "? A finished job is removed together with its results.")) return;
+    const r = await request("/jobs/" + encodeURIComponent(jobId), { method: "DELETE" });
+    out.append(el("h3", { textContent: "Dismiss" }));
+    out.append(r.ok ? jsonBlock(r.body) : el("p", { className: "banner", textContent: describeFailure(r) }));
+    loadJobs();
+  });
+}
+
+// ------------------------------------------------------------ service ------
+
+async function loadService() {
+  const landing = await request("/");
+  const host = $("#landing");
+  host.replaceChildren();
+  if (!landing.ok) {
+    host.append(el("p", { className: "banner", textContent: describeFailure(landing) }));
+  } else {
+    const b = landing.body || {};
+    host.append(kv([["title", b.title], ["description", b.description]]));
+    if (Array.isArray(b.links) && b.links.length) {
+      const table = el("table");
+      const head = el("tr");
+      for (const h of ["rel", "title", "href"]) head.append(el("th", { textContent: h }));
+      table.append(el("thead", {}, [head]));
+      const tbody = el("tbody");
+      for (const l of b.links) {
+        const tr = el("tr");
+        tr.append(el("td", { className: "mono", textContent: l.rel || "" }));
+        tr.append(el("td", { textContent: l.title || "" }));
+        const a = el("a", { href: l.href, textContent: l.href, target: "_blank", rel: "noopener" });
+        tr.append(el("td", { className: "mono" }, [a]));
+        tbody.append(tr);
+      }
+      table.append(tbody);
+      host.append(table);
+    }
+  }
+
+  const conf = await request("/conformance");
+  const chost = $("#conformance");
+  chost.replaceChildren();
+  if (!conf.ok) {
+    chost.append(el("p", { className: "banner", textContent: describeFailure(conf) }));
+  } else {
+    const ul = el("ul", { className: "mono" });
+    for (const c of (conf.body && conf.body.conformsTo) || []) ul.append(el("li", { textContent: c }));
+    chost.append(ul);
+  }
+
+  $("#apiLink").href = state.baseUrl.replace(/\/+$/, "") + "/api";
+}
+
+// ---------------------------------------------------------------- init -----
+
+// normalizeBaseUrl makes a typed-in host usable as a fetch base. Without a
+// scheme the value is a relative URL, so fetch resolves it against the page
+// itself - from a file:// page that silently becomes a nonexistent local path,
+// which surfaces as a bare network error with no hint of the real cause.
+function normalizeBaseUrl(v) {
+  const s = (v || "").trim().replace(/\/+$/, "");
+  if (!s) return "";
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(s)) return s;
+  // A bare host gets https, except loopback, which is normally plain http.
+  const loopback = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(s);
+  return (loopback ? "http://" : "https://") + s;
+}
+
+
+function readSettings() {
+  state.baseUrl = normalizeBaseUrl($("#baseUrl").value) || "http://localhost:8080";
+  // Show what was actually used, so an added scheme is visible rather than magic.
+  $("#baseUrl").value = state.baseUrl;
+  state.apiKey = $("#apiKey").value;
+  try {
+    localStorage.setItem("ogcConsole.baseUrl", state.baseUrl);
+    // The key stays in sessionStorage so it is dropped when the tab closes.
+    sessionStorage.setItem("ogcConsole.apiKey", state.apiKey);
+  } catch (_) { /* storage can be blocked; the console works without it */ }
+}
+
+function restoreSettings() {
+  try {
+    const url = localStorage.getItem("ogcConsole.baseUrl");
+    if (url) $("#baseUrl").value = url;
+    const key = sessionStorage.getItem("ogcConsole.apiKey");
+    if (key) $("#apiKey").value = key;
+  } catch (_) { /* ignore */ }
+}
+
+async function connect() {
+  readSettings();
+  stopPolling();
+  showError(null);
+  $("#connStatus").textContent = "connecting...";
+  const ok = await loadProcesses();
+  $("#connStatus").textContent = ok
+    ? "connected - " + state.processes.length + " process(es)"
+    : "not connected";
+  $("#connStatus").className = ok ? "pill ok" : "muted";
+  if (ok) { loadJobs(); loadService(); }
+}
+
+function initTabs() {
+  for (const btn of document.querySelectorAll("nav.tabs button")) {
+    btn.addEventListener("click", () => {
+      for (const other of document.querySelectorAll("nav.tabs button")) {
+        other.setAttribute("aria-selected", String(other === btn));
+      }
+      for (const panel of document.querySelectorAll(".tabpanel")) {
+        panel.hidden = panel.id !== "tab-" + btn.dataset.tab;
+      }
+      if (btn.dataset.tab === "jobs") loadJobs();
+    });
+  }
+}
+
+// ------------------------------------------------------------- recipe ----
+// A recipe is a CWL Workflow document (https://www.commonwl.org/), in its JSON
+// encoding. The console reads it, works out the step order from the
+// in/out graph, and executes each step as its own OGC process execution,
+// feeding each output into the next input. Nothing about the five plot-bag
+// steps is hard-coded: edit the document and the diagram, the order and the
+// execution all follow.
+//
+// CWL is used as the workflow definition only. These steps are OGC processes,
+// not CWL CommandLineTools, so "run" names a process ID rather than a tool
+// document - written as "ogc:<id>", "#<id>" or a bare "<id>".
+//
+// Two execution modes share the one document:
+//   steps  - one request per step, every intermediate value visible (the DAG
+//            is honoured, so a step feeding two others runs once).
+//   nested - compiled into a single OGC API Processes Part 3 nested execution
+//            request. The server resolves the chain internally. Part 3 nesting
+//            is a tree rather than a DAG, so a step feeding two others is
+//            duplicated and therefore runs twice.
+
+const CWL_DEFAULT = {
+  cwlVersion: "v1.2",
+  class: "Workflow",
+  label: "Plot to BAG matching",
+  inputs: {
+    geometry: "Any",
+    plan_dataid: "string",
+    plan_plannaam: "string",
+    min_overlap_ratio: "float",
+    full_match_threshold: "float",
+  },
+  outputs: {
+    match_result: { type: "Any", outputSource: "classify/match_result" },
+  },
+  steps: {
+    prepare: {
+      run: "ogc:plot-geometry-prepare",
+      in: { geometry: "geometry" },
+      out: ["geometry", "geometry_report"],
+    },
+    bbox: {
+      run: "ogc:plot-bbox",
+      in: { geometry: "prepare/geometry" },
+      out: ["bbox"],
+    },
+    fetch: {
+      run: "ogc:bag-panden-fetch",
+      in: { bbox: "bbox/bbox" },
+      out: ["bag_buildings", "bag_query"],
+    },
+    overlap: {
+      run: "ogc:plot-bag-overlap",
+      in: {
+        geometry: "prepare/geometry",
+        bag_buildings: "fetch/bag_buildings",
+        min_overlap_ratio: "min_overlap_ratio",
+      },
+      out: ["overlaps", "skipped"],
+    },
+    classify: {
+      run: "ogc:bag-match-classify",
+      in: {
+        overlaps: "overlap/overlaps",
+        plan_dataid: "plan_dataid",
+        plan_plannaam: "plan_plannaam",
+        full_match_threshold: "full_match_threshold",
+      },
+      out: ["match_result"],
+    },
+  },
+};
+
+// The same recipe with the BAG supplied by the caller: steps 2 and 3 drop out,
+// which is the plot-bag-matching route rather than plot-bag-matching-pdok.
+const CWL_NO_FETCH = {
+  cwlVersion: "v1.2",
+  class: "Workflow",
+  label: "Plot to BAG matching, caller-supplied BAG",
+  inputs: {
+    geometry: "Any",
+    bag_buildings: "Any",
+    plan_dataid: "string",
+    min_overlap_ratio: "float",
+    full_match_threshold: "float",
+  },
+  outputs: {
+    match_result: { type: "Any", outputSource: "classify/match_result" },
+  },
+  steps: {
+    prepare: {
+      run: "ogc:plot-geometry-prepare",
+      in: { geometry: "geometry" },
+      out: ["geometry", "geometry_report"],
+    },
+    overlap: {
+      run: "ogc:plot-bag-overlap",
+      in: {
+        geometry: "prepare/geometry",
+        bag_buildings: "bag_buildings",
+        min_overlap_ratio: "min_overlap_ratio",
+      },
+      out: ["overlaps", "skipped"],
+    },
+    classify: {
+      run: "ogc:bag-match-classify",
+      in: {
+        overlaps: "overlap/overlaps",
+        plan_dataid: "plan_dataid",
+        full_match_threshold: "full_match_threshold",
+      },
+      out: ["match_result"],
+    },
+  },
+};
+
+const RECIPE_INPUTS_EXAMPLE = {
+  geometry: {
+    type: "Polygon",
+    coordinates: [[
+      [5.1214, 52.0907], [5.1230, 52.0907], [5.1230, 52.0918], [5.1214, 52.0918], [5.1214, 52.0907],
+    ]],
+  },
+  plan_dataid: "utrecht-demo",
+  plan_plannaam: "Utrecht demo",
+  min_overlap_ratio: 0.05,
+  full_match_threshold: 0.95,
+};
+
+// A bowtie, which plot-geometry-prepare reports as invalid and repairs.
+const RECIPE_INPUTS_BOWTIE = {
+  ...RECIPE_INPUTS_EXAMPLE,
+  geometry: {
+    type: "Polygon",
+    coordinates: [[
+      [5.1214, 52.0907], [5.1230, 52.0918], [5.1230, 52.0907], [5.1214, 52.0918], [5.1214, 52.0907],
+    ]],
+  },
+};
+
+const recipeRun = { plan: null, steps: {}, busy: false, mode: "steps" };
+
+// ---- parsing the workflow -------------------------------------------------
+
+// processIdOf strips the ways a CWL "run" can name an OGC process.
+function processIdOf(run) {
+  if (typeof run !== "string") return null;
+  return run.replace(/^ogc:/, "").replace(/^#/, "").trim() || null;
+}
+
+// sourceOf normalises a CWL step input binding to { source } or { value }.
+// CWL allows a bare string, { source }, or { default } for a literal.
+function sourceOf(binding) {
+  if (typeof binding === "string") return { source: binding };
+  if (binding && typeof binding === "object") {
+    if (typeof binding.source === "string") return { source: binding.source };
+    if ("default" in binding) return { value: binding.default };
+    if ("valueFrom" in binding) return { unsupported: "valueFrom" };
+  }
+  return { unsupported: "binding" };
+}
+
+// planRecipe turns a CWL Workflow into an ordered, laid-out execution plan.
+// Errors are collected rather than thrown so the editor can show all of them.
+function planRecipe(cwl) {
+  const errors = [];
+  if (!cwl || typeof cwl !== "object") return { errors: ["the document is not a JSON object"] };
+  if (cwl.class !== "Workflow") errors.push('class must be "Workflow", got ' + JSON.stringify(cwl.class));
+  const stepsObj = cwl.steps;
+  if (!stepsObj || typeof stepsObj !== "object" || Array.isArray(stepsObj)) {
+    errors.push("steps must be an object keyed by step id");
+    return { errors };
+  }
+
+  const workflowInputs = new Set(Object.keys(cwl.inputs || {}));
+  const steps = {};
+  for (const [id, raw] of Object.entries(stepsObj)) {
+    const processId = processIdOf(raw && raw.run);
+    if (!processId) {
+      errors.push(`step "${id}": run must name a process, e.g. "ogc:plot-bbox"`);
+      continue;
+    }
+    const outs = Array.isArray(raw.out) ? raw.out.map(String) : [];
+    if (outs.length === 0) errors.push(`step "${id}": out must list at least one output`);
+
+    const inputs = {};
+    const deps = new Set();
+    for (const [name, binding] of Object.entries(raw.in || {})) {
+      const s = sourceOf(binding);
+      if (s.unsupported) {
+        errors.push(`step "${id}" input "${name}": ${s.unsupported} is not supported by this console`);
+        continue;
+      }
+      if ("value" in s) { inputs[name] = s; continue; }
+      const [head, tail] = s.source.split("/");
+      if (tail !== undefined) {
+        deps.add(head);
+        inputs[name] = { step: head, output: tail };
+      } else if (workflowInputs.has(head)) {
+        inputs[name] = { workflowInput: head };
+      } else {
+        errors.push(`step "${id}" input "${name}": source "${s.source}" is neither a workflow input nor step/output`);
+      }
+    }
+    steps[id] = { id, processId, outs, inputs, deps: [...deps] };
+  }
+
+  for (const step of Object.values(steps)) {
+    for (const d of step.deps) {
+      if (!steps[d]) errors.push(`step "${step.id}" depends on unknown step "${d}"`);
+    }
+  }
+  if (errors.length) return { errors };
+
+  // Kahn topological sort; a leftover step means a cycle.
+  const indegree = {};
+  for (const id of Object.keys(steps)) indegree[id] = 0;
+  for (const step of Object.values(steps)) for (const _ of step.deps) indegree[step.id]++;
+  const queue = Object.keys(steps).filter((id) => indegree[id] === 0).sort();
+  const order = [];
+  while (queue.length) {
+    const id = queue.shift();
+    order.push(id);
+    for (const other of Object.values(steps)) {
+      if (other.deps.includes(id) && --indegree[other.id] === 0) queue.push(other.id);
+    }
+    queue.sort();
+  }
+  if (order.length !== Object.keys(steps).length) {
+    const stuck = Object.keys(steps).filter((id) => !order.includes(id));
+    return { errors: ["the steps form a cycle: " + stuck.join(", ")] };
+  }
+
+  // Rank = longest path from a root, which gives the diagram its columns.
+  const rank = {};
+  for (const id of order) {
+    rank[id] = step0Rank(steps[id], rank);
+  }
+
+  const terminal = Object.keys(steps).filter(
+    (id) => !Object.values(steps).some((s) => s.deps.includes(id))
+  );
+
+  return { cwl, steps, order, rank, terminal, errors: [] };
+}
+
+function step0Rank(step, rank) {
+  let r = 0;
+  for (const d of step.deps) r = Math.max(r, (rank[d] ?? 0) + 1);
+  return r;
+}
+
+// ---- diagram --------------------------------------------------------------
+
+const BPMN_W = 186, BPMN_H = 64, BPMN_HGAP = 64, BPMN_VGAP = 26, BPMN_PAD = 56;
+
+// layoutRecipe places each step in a column by rank, stacked within the column.
+function layoutRecipe(plan) {
+  const columns = {};
+  for (const id of plan.order) (columns[plan.rank[id]] ||= []).push(id);
+
+  const maxRank = Math.max(...Object.keys(columns).map(Number));
+  const tallest = Math.max(...Object.values(columns).map((c) => c.length));
+  const height = BPMN_PAD + tallest * (BPMN_H + BPMN_VGAP) + 20;
+  const width = BPMN_PAD * 2 + (maxRank + 1) * (BPMN_W + BPMN_HGAP) + 40;
+
+  const nodes = {};
+  for (const [r, ids] of Object.entries(columns)) {
+    const colHeight = ids.length * (BPMN_H + BPMN_VGAP) - BPMN_VGAP;
+    const top = (height - colHeight) / 2;
+    ids.forEach((id, i) => {
+      nodes[id] = {
+        x: BPMN_PAD + Number(r) * (BPMN_W + BPMN_HGAP),
+        y: top + i * (BPMN_H + BPMN_VGAP),
+        w: BPMN_W, h: BPMN_H,
+      };
+    });
+  }
+
+  const startX = 18, endX = width - 50;
+  const midY = height / 2;
+  const flows = [];
+  const roots = plan.order.filter((id) => plan.steps[id].deps.length === 0);
+  for (const id of roots) flows.push({ id: "start-" + id, d: orthPath(startX + 16, midY, nodes[id], true) });
+  for (const step of Object.values(plan.steps)) {
+    for (const d of step.deps) {
+      flows.push({ id: d + "-" + step.id, from: d, to: step.id, d: edgePath(nodes[d], nodes[step.id]) });
+    }
+  }
+  for (const id of plan.terminal) flows.push({ id: id + "-end", from: id, d: orthPathOut(nodes[id], endX - 16, midY) });
+
+  return { nodes, flows, width, height, startX, endX, midY };
+}
+
+function edgePath(a, b) {
+  const x1 = a.x + a.w, y1 = a.y + a.h / 2, x2 = b.x, y2 = b.y + b.h / 2;
+  if (Math.abs(y1 - y2) < 1) return `M ${x1} ${y1} H ${x2}`;
+  const mid = x1 + (x2 - x1) / 2;
+  return `M ${x1} ${y1} H ${mid} V ${y2} H ${x2}`;
+}
+function orthPath(x, y, node, into) {
+  const tx = into ? node.x : node.x + node.w, ty = node.y + node.h / 2;
+  if (Math.abs(y - ty) < 1) return `M ${x} ${y} H ${tx}`;
+  const mid = x + (tx - x) / 2;
+  return `M ${x} ${y} H ${mid} V ${ty} H ${tx}`;
+}
+function orthPathOut(node, x, y) {
+  const fx = node.x + node.w, fy = node.y + node.h / 2;
+  if (Math.abs(y - fy) < 1) return `M ${fx} ${fy} H ${x}`;
+  const mid = fx + (x - fx) / 2;
+  return `M ${fx} ${fy} H ${mid} V ${y} H ${x}`;
+}
+
+function svgEl(tag, attrs, children) {
+  const n = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [k, v] of Object.entries(attrs || {})) n.setAttribute(k, String(v));
+  for (const c of children || []) n.append(c);
+  return n;
+}
+function svgText(x, y, cls, text, anchor) {
+  const t = svgEl("text", { x, y, class: cls });
+  if (anchor) t.setAttribute("text-anchor", anchor);
+  t.textContent = text;
+  return t;
+}
+
+function renderBpmn(plan) {
+  const host = $("#bpmnHost");
+  if (!plan || plan.errors.length) {
+    host.replaceChildren(el("p", {
+      className: "banner",
+      textContent: "Workflow cannot be drawn: " + (plan ? plan.errors.join("; ") : "no document"),
+    }));
+    return;
+  }
+
+  const L = layoutRecipe(plan);
+  const svg = svgEl("svg", {
+    class: "bpmn", viewBox: `0 0 ${L.width} ${L.height}`,
+    role: "img", "aria-label": "Flow of the " + plan.order.length + " recipe steps",
+  });
+  svg.style.minWidth = Math.min(L.width, 1100) + "px";
+
+  svg.append(svgEl("defs", {}, [
+    svgEl("marker", {
+      id: "bpmnArrow", viewBox: "0 0 10 10", refX: 9, refY: 5,
+      markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse",
+    }, [svgEl("path", { d: "M 0 0 L 10 5 L 0 10 z", fill: "currentColor" })]),
+  ]));
+
+  for (const f of L.flows) {
+    svg.append(svgEl("path", {
+      d: f.d, class: "flow", id: "bpmn-flow-" + f.id,
+      "marker-end": "url(#bpmnArrow)",
+      "data-from": f.from || "", "data-to": f.to || "",
+    }));
+  }
+
+  svg.append(svgEl("circle", { cx: L.startX, cy: L.midY, r: 16, class: "evt" }));
+  svg.append(svgEl("circle", { cx: L.endX, cy: L.midY, r: 16, class: "evt evt-end" }));
+
+  plan.order.forEach((id, i) => {
+    const step = plan.steps[id];
+    const box = L.nodes[id];
+    const g = svgEl("g", {
+      class: "task", "data-step": id, "data-state": "idle",
+      tabindex: "0", role: "button", "aria-label": "Step " + (i + 1) + " " + step.processId,
+    });
+    g.append(svgEl("rect", { x: box.x, y: box.y, width: box.w, height: box.h }));
+    g.append(svgText(box.x + 12, box.y + 19, "t-num", (i + 1) + ". " + id));
+    g.append(svgText(box.x + 12, box.y + 37, "t-id", step.processId));
+    g.append(svgText(box.x + 12, box.y + 53, "t-io", "out: " + step.outs.join(", ")));
+    const time = svgText(box.x + box.w - 12, box.y + 19, "t-time", "", "end");
+    time.setAttribute("data-role", "time");
+    g.append(time);
+
+    const show = () => showRecipeStep(id);
+    g.addEventListener("click", show);
+    g.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); show(); }
+    });
+    svg.append(g);
+  });
+
+  host.replaceChildren(svg);
+  renderRecipeChips(plan);
+}
+
+function renderRecipeChips(plan) {
+  const host = $("#recipeSteps");
+  host.replaceChildren(...plan.order.map((id, i) => {
+    const li = el("li", {}, [el("span", {
+      className: "mono", textContent: (i + 1) + ". " + id + " (" + plan.steps[id].processId + ")",
+    })]);
+    li.setAttribute("data-step", id);
+    li.setAttribute("data-state", "idle");
+    return li;
+  }));
+}
+
+function setStepState(id, stateName, ms) {
+  const node = document.querySelector('.bpmn .task[data-step="' + CSS.escape(id) + '"]');
+  if (node) {
+    node.setAttribute("data-state", stateName);
+    const t = node.querySelector('[data-role="time"]');
+    if (t) t.textContent = ms == null ? "" : ms + " ms";
+  }
+  const chip = document.querySelector('#recipeSteps li[data-step="' + CSS.escape(id) + '"]');
+  if (chip) chip.setAttribute("data-state", stateName);
+  for (const f of document.querySelectorAll('.bpmn .flow[data-from="' + CSS.escape(id) + '"]')) {
+    f.setAttribute("data-state", stateName === "done" ? "done" : "idle");
+  }
+}
+
+// ---- execution ------------------------------------------------------------
+
+function readRecipe() {
+  let cwl, inputs;
+  try { cwl = JSON.parse($("#rCwl").value); }
+  catch (err) { return { errors: ["the workflow is not valid JSON - " + err.message] }; }
+  try { inputs = JSON.parse($("#rInputs").value); }
+  catch (err) { return { errors: ["the workflow inputs are not valid JSON - " + err.message] }; }
+  const plan = planRecipe(cwl);
+  if (plan.errors.length) return { errors: plan.errors };
+  return { plan, inputs, errors: [] };
+}
+
+// resolveStepInputs builds a step's inputs from the workflow inputs and the
+// outputs of the steps it depends on.
+function resolveStepInputs(step, workflowInputs, produced) {
+  const inputs = {};
+  for (const [name, binding] of Object.entries(step.inputs)) {
+    if ("value" in binding) { inputs[name] = binding.value; continue; }
+    if ("workflowInput" in binding) {
+      const v = workflowInputs[binding.workflowInput];
+      // An absent optional workflow input is simply left out, so the process
+      // applies its own default rather than receiving null.
+      if (v !== undefined && v !== null) inputs[name] = v;
+      continue;
+    }
+    const upstream = produced[binding.step];
+    if (!upstream || !(binding.output in upstream)) {
+      throw new Error(`step "${step.id}" needs ${binding.step}/${binding.output}, which was not produced`);
+    }
+    inputs[name] = upstream[binding.output];
+  }
+  return inputs;
+}
+
+async function execStep(step, inputs) {
+  const outputs = {};
+  for (const o of step.outs) outputs[o] = {};
+  const body = JSON.stringify({ process: step.processId, inputs, outputs });
+  setStepState(step.id, "running", null);
+  const started = performance.now();
+  const res = await request("/processes/" + step.processId + "/execution", { method: "POST", body });
+  const ms = Math.round(performance.now() - started);
+  recipeRun.steps[step.id] = { step, request: { inputs, outputs }, response: res, ms };
+  setStepState(step.id, res.ok ? "done" : "failed", ms);
+  return res;
+}
+
+// readStepOutputs maps a response back onto the step's declared outputs. One
+// requested output comes back as the raw value; several come back as a results
+// document whose entries are OGC qualified values, so .value is unwrapped.
+function readStepOutputs(step, body) {
+  if (step.outs.length === 1) return { [step.outs[0]]: unwrapValue(body) };
+  const out = {};
+  for (const name of step.outs) {
+    out[name] = unwrapValue(body && typeof body === "object" ? body[name] : undefined);
+  }
+  return out;
+}
+
+function unwrapValue(v) {
+  if (v && typeof v === "object" && !Array.isArray(v) && "value" in v) return v.value;
+  return v;
+}
+
+async function runRecipeStepwise(plan, workflowInputs) {
+  const produced = {};
+  for (const id of plan.order) {
+    const step = plan.steps[id];
+    let inputs;
+    try { inputs = resolveStepInputs(step, workflowInputs, produced); }
+    catch (err) { showError(String(err.message || err)); setStepState(id, "failed", null); return null; }
+
+    const res = await execStep(step, inputs);
+    if (!res.ok) {
+      $("#recipeStatus").textContent = 'failed at "' + id + '"';
+      $("#recipeStatus").className = "pill";
+      showError('Step "' + id + '" (' + step.processId + '): ' + describeFailure(res));
+      showRecipeStep(id);
+      return null;
+    }
+    produced[id] = readStepOutputs(step, res.body);
+  }
+  return produced;
+}
+
+// compileToNested turns the DAG into one Part 3 nested execution request for
+// the terminal step. Part 3 nesting is a tree, so a step feeding two others is
+// emitted twice and the server runs it twice - the step-by-step mode runs it
+// once. countDuplicates reports that so the difference is not a surprise.
+function compileToNested(plan, workflowInputs, targetId, seen) {
+  const step = plan.steps[targetId];
+  seen[targetId] = (seen[targetId] || 0) + 1;
+
+  const inputs = {};
+  for (const [name, binding] of Object.entries(step.inputs)) {
+    if ("value" in binding) { inputs[name] = binding.value; continue; }
+    if ("workflowInput" in binding) {
+      const v = workflowInputs[binding.workflowInput];
+      if (v !== undefined && v !== null) inputs[name] = v;
+      continue;
+    }
+    const nested = compileToNested(plan, workflowInputs, binding.step, seen);
+    nested.outputs = { [binding.output]: {} };
+    inputs[name] = nested;
+  }
+  return { process: step.processId, inputs };
+}
+
+async function runRecipeNested(plan, workflowInputs) {
+  if (plan.terminal.length !== 1) {
+    showError("A nested request needs exactly one terminal step; this workflow has " +
+      plan.terminal.length + " (" + plan.terminal.join(", ") + ").");
+    return null;
+  }
+  const targetId = plan.terminal[0];
+  const target = plan.steps[targetId];
+  const seen = {};
+  const compiled = compileToNested(plan, workflowInputs, targetId, seen);
+
+  const outputs = {};
+  for (const o of target.outs) outputs[o] = {};
+  const body = JSON.stringify({ ...compiled, outputs });
+
+  for (const id of plan.order) setStepState(id, "running", null);
+  const started = performance.now();
+  const res = await request("/processes/" + target.processId + "/execution", { method: "POST", body });
+  const ms = Math.round(performance.now() - started);
+
+  for (const id of plan.order) setStepState(id, res.ok ? "done" : "failed", null);
+  recipeRun.steps[targetId] = { step: target, request: JSON.parse(body), response: res, ms };
+
+  const duplicated = Object.entries(seen).filter(([, n]) => n > 1);
+  $("#recipeModeNote").textContent = duplicated.length
+    ? "Part 3 nesting is a tree, so these steps appear more than once and the server ran each that many times: " +
+      duplicated.map(([id, n]) => id + " x" + n).join(", ") + ". Step-by-step mode runs each once."
+    : "";
+
+  if (!res.ok) {
+    $("#recipeStatus").textContent = "nested request failed";
+    $("#recipeStatus").className = "pill";
+    showError(describeFailure(res));
+    showRecipeStep(targetId);
+    return null;
+  }
+  return { [targetId]: readStepOutputs(target, res.body) };
+}
+
+async function runRecipe() {
+  if (recipeRun.busy) return;
+  readSettings();
+  showError(null);
+
+  const parsed = readRecipe();
+  if (parsed.errors.length) {
+    showError(parsed.errors.join("; "));
+    return;
+  }
+  recipeRun.plan = parsed.plan;
+  recipeRun.steps = {};
+  recipeRun.mode = $("#rMode").value;
+  renderBpmn(parsed.plan);
+  $("#recipeCompare").hidden = true;
+  $("#recipeModeNote").textContent = "";
+
+  recipeRun.busy = true;
+  $("#runRecipe").disabled = true;
+  $("#recipeStatus").textContent = "running...";
+  $("#recipeStatus").className = "pill";
+
+  try {
+    const produced = recipeRun.mode === "nested"
+      ? await runRecipeNested(parsed.plan, parsed.inputs)
+      : await runRecipeStepwise(parsed.plan, parsed.inputs);
+    if (!produced) return;
+
+    // Resolve the workflow outputs through outputSource, which is what the
+    // document says the recipe actually returns.
+    const results = {};
+    for (const [name, decl] of Object.entries(parsed.plan.cwl.outputs || {})) {
+      const src = typeof decl === "string" ? decl : decl && decl.outputSource;
+      if (typeof src !== "string") continue;
+      const [stepId, outName] = src.split("/");
+      results[name] = produced[stepId] ? produced[stepId][outName] : undefined;
+    }
+    recipeRun.results = results;
+
+    const summary = (results.match_result || {}).summary;
+    $("#recipeStatus").textContent = summary
+      ? "done - " + summary.n_candidates + " candidates, " + summary.n_full_matches +
+        " full, " + summary.n_partial_matches + " partial"
+      : "done - " + parsed.plan.order.length + " step(s)";
+    $("#recipeStatus").className = "pill ok";
+    showRecipeStep(parsed.plan.terminal[0]);
+  } finally {
+    recipeRun.busy = false;
+    $("#runRecipe").disabled = false;
+  }
+}
+
+function showRecipeStep(id) {
+  for (const node of document.querySelectorAll(".bpmn .task")) {
+    node.setAttribute("data-selected", String(node.dataset.step === id));
+  }
+  const rec = recipeRun.steps[id];
+  const host = $("#recipeDetail");
+  const step = recipeRun.plan && recipeRun.plan.steps[id];
+  if (!step) return;
+
+  if (!rec) {
+    host.replaceChildren(
+      el("h2", { textContent: id + " - " + step.processId }),
+      el("p", { className: "mono muted", textContent: "POST /processes/" + step.processId + "/execution" }),
+      el("p", {
+        className: "muted",
+        textContent: recipeRun.mode === "nested"
+          ? "Ran on the server as part of the nested request; it has no request of its own."
+          : "Not run yet.",
+      })
+    );
+    return;
+  }
+
+  const res = rec.response;
+  host.replaceChildren(
+    el("h2", { textContent: id + " - " + step.processId }),
+    el("p", { className: "mono muted", textContent: "POST " + res.url + "  (" + rec.ms + " ms)" }),
+    el("p", {
+      className: res.ok ? "pill ok" : "banner",
+      textContent: res.ok ? res.status + " " + (res.statusText || "") : describeFailure(res),
+    }),
+    el("h2", { textContent: "Request" }),
+    jsonBlock(rec.request),
+    el("h2", { textContent: "Response" }),
+    jsonBlock(res.body ?? res.text ?? "")
+  );
+}
+
+// compareRecipe runs the single-call process on the same plot and diffs the
+// match_result against what the recipe produced.
+async function compareRecipe() {
+  const produced = recipeRun.results && recipeRun.results.match_result;
+  if (!produced) {
+    showError("Run the recipe successfully first, then compare.");
+    return;
+  }
+  readSettings();
+  const parsed = readRecipe();
+  if (parsed.errors.length) { showError(parsed.errors.join("; ")); return; }
+
+  const usesFetch = Object.values(parsed.plan.steps).some((s) => s.processId === "bag-panden-fetch");
+  const target = usesFetch ? "plot-bag-matching-pdok" : "plot-bag-matching";
+  const inputs = {
+    plot: {
+      plan_dataid: parsed.inputs.plan_dataid,
+      plan_plannaam: parsed.inputs.plan_plannaam,
+      geometry: parsed.inputs.geometry,
+    },
+    min_overlap_ratio: parsed.inputs.min_overlap_ratio,
+    full_match_threshold: parsed.inputs.full_match_threshold,
+  };
+  if (!usesFetch) inputs.bag_buildings = parsed.inputs.bag_buildings;
+
+  const res = await request("/processes/" + target + "/execution", {
+    method: "POST",
+    body: JSON.stringify({ inputs, outputs: { match_result: {} } }),
+  });
+
+  const host = $("#recipeCompare");
+  host.hidden = false;
+  if (!res.ok) {
+    host.replaceChildren(
+      el("h2", { textContent: "Comparison" }),
+      el("p", { className: "banner", textContent: describeFailure(res) })
+    );
+    return;
+  }
+  const single = unwrapValue(res.body);
+  const same = JSON.stringify(produced) === JSON.stringify(single);
+  host.replaceChildren(
+    el("h2", { textContent: "Comparison with " + target }),
+    el("p", {
+      className: same ? "pill ok" : "banner",
+      textContent: same
+        ? "Identical - the recipe and " + target + " returned the same match_result."
+        : "Different - the recipe and " + target + " disagree.",
+    }),
+    el("h2", { textContent: target }),
+    jsonBlock(single)
+  );
+}
+
+function loadRecipeDoc(doc) {
+  $("#rCwl").value = JSON.stringify(doc, null, 2);
+  const plan = planRecipe(doc);
+  recipeRun.plan = plan;
+  recipeRun.steps = {};
+  renderBpmn(plan);
+}
+
+function initRecipe() {
+  $("#rInputs").value = JSON.stringify(RECIPE_INPUTS_EXAMPLE, null, 2);
+  loadRecipeDoc(CWL_DEFAULT);
+
+  $("#runRecipe").addEventListener("click", runRecipe);
+  $("#compareRecipe").addEventListener("click", compareRecipe);
+  $("#rCwlDefault").addEventListener("click", () => loadRecipeDoc(CWL_DEFAULT));
+  $("#rCwlNoFetch").addEventListener("click", () => {
+    loadRecipeDoc(CWL_NO_FETCH);
+    const inputs = JSON.parse($("#rInputs").value || "{}");
+    if (!("bag_buildings" in inputs)) {
+      inputs.bag_buildings = [];
+      $("#rInputs").value = JSON.stringify(inputs, null, 2);
+    }
+  });
+  $("#rCwlValidate").addEventListener("click", () => {
+    const parsed = readRecipe();
+    showError(parsed.errors.length ? parsed.errors.join("; ") : null);
+    if (!parsed.errors.length) {
+      recipeRun.plan = parsed.plan;
+      renderBpmn(parsed.plan);
+      $("#recipeStatus").textContent = "valid - " + parsed.plan.order.length + " steps: " + parsed.plan.order.join(" -> ");
+      $("#recipeStatus").className = "pill ok";
+    }
+  });
+  $("#rExample").addEventListener("click", () => {
+    $("#rInputs").value = JSON.stringify(RECIPE_INPUTS_EXAMPLE, null, 2);
+  });
+  $("#rBowtie").addEventListener("click", () => {
+    $("#rInputs").value = JSON.stringify(RECIPE_INPUTS_BOWTIE, null, 2);
+  });
+  $("#rMode").addEventListener("change", () => {
+    recipeRun.mode = $("#rMode").value;
+    $("#recipeModeNote").textContent = recipeRun.mode === "nested"
+      ? "The whole recipe is compiled into one Part 3 nested execution request, so intermediate values stay on the server."
+      : "";
+  });
+}
+
+initTabs();
+restoreSettings();
+initRecipe();
+$("#connect").addEventListener("click", connect);
+$("#baseUrl").addEventListener("keydown", (e) => { if (e.key === "Enter") connect(); });
+$("#apiKey").addEventListener("keydown", (e) => { if (e.key === "Enter") connect(); });
+$("#refreshJobs").addEventListener("click", loadJobs);
+$("#loadApi").addEventListener("click", async () => {
+  const res = await request("/api");
+  const host = $("#apiDoc");
+  host.replaceChildren(res.ok ? jsonBlock(res.body) : el("p", { className: "banner", textContent: describeFailure(res) }));
+});
+
+connect();
+</script>
+</body>
+</html>

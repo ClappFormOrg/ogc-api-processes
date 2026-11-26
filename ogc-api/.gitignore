@@ -1,0 +1,28 @@
+# Compiled binary
+ogc-api.exe
+ogc-api
+
+# Test coverage
+coverage.out
+coverage.html
+
+# Go workspace
+go.work
+go.work.sum
+
+# Environment / secrets
+.env
+*.env
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python notebooks
+.ipynb

@@ -1,0 +1,31 @@
+# Keep secrets, VCS history and build artifacts out of the build context.
+# Anything copied in by `COPY . .` stays in the image layer even if a later
+# step deletes it, so exclusion here is the only reliable place.
+.env
+*.env
+.git
+.gitignore
+
+# Build artifacts
+*.exe
+ogc-api
+coverage.out
+coverage.html
+
+# Not needed to compile the server
+**/*_test.go
+web/
+Makefile
+README.md
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose.*.yml
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
